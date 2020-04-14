@@ -1,0 +1,34 @@
+{
+  "name": "sovrin/proximity",
+  "version": "1.0.0",
+  "description": "php adapter for proximity",
+  "keywords": [
+    "proximity",
+    "debug"
+  ],
+  "type": "library",
+  "license": "MIT",
+  "require": {
+    "php": "^7.2",
+    "ext-json": "*"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^8.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Proximity\\": "src"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Proximity\\": "tests"
+    }
+  },
+  "config": {
+    "platform": {
+      "php": "7.2"
+    },
+    "sort-packages": true
+  }
+}
