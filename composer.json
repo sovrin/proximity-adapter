@@ -17,7 +17,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Proximity\\": "src"
+      "Proximity\\": "src\\Proximity"
     }
   },
   "autoload-dev": {
