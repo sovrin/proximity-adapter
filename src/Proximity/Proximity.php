@@ -50,7 +50,7 @@ class Proximity {
         self::CONFIG_HOST => 'localhost',
         self::CONFIG_PORT => 3315,
         self::CONFIG_TIMEOUT => 1,
-        self::CONFIG_DEBUG => true,
+        self::CONFIG_DEBUG => false,
     ];
 
     /**
