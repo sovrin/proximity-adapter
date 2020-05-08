@@ -3,6 +3,8 @@
 namespace Proximity;
 
 use Exception;
+use Proximity\Adapter\IAdapter;
+use Proximity\Adapter\Socket;
 
 /**
  * @author  Oleg Kamlowski <oleg.kamlowski@thomann.de>
@@ -15,6 +17,7 @@ class Proximity {
     const CONFIG_PORT = 'port';
     const CONFIG_DEBUG = 'debug';
     const CONFIG_TIMEOUT = 'timeout';
+    const CONFIG_ADAPTER = 'adapter';
 
     const CONTEXT_PROJECT = 'project';
 
@@ -34,9 +37,9 @@ class Proximity {
     private $ready = false;
 
     /**
-     * @var Socket|null
+     * @var IAdapter
      */
-    private $socket = null;
+    private $adapter = null;
 
     /**
      * @var array
@@ -51,6 +54,7 @@ class Proximity {
         self::CONFIG_PORT => 3315,
         self::CONFIG_TIMEOUT => 1,
         self::CONFIG_DEBUG => false,
+        self::CONFIG_ADAPTER => null
     ];
 
     /**
@@ -110,9 +114,9 @@ class Proximity {
      */
     static function open () {
         $instance = self::getInstance();
-        $instance->socket = $instance->create();
+        $instance->adapter = $instance->create();
 
-        if (!$instance->socket) {
+        if (!$instance->adapter) {
             return;
         }
 
@@ -150,7 +154,7 @@ class Proximity {
 
         $callback = function () use ($instance, $payload) {
             $instance->send($payload);
-            $instance->socket->close();
+            $instance->adapter->close();
             $instance->ready = false;
         };
 
@@ -216,10 +220,10 @@ class Proximity {
      * @param $payload
      */
     private function send ($payload) {
-        $socket = $this->socket;
+        $adapter = $this->adapter;
 
         try {
-            $socket->write($payload);
+            $adapter->flush($payload);
         } catch (Exception $exception) {
             [self::CONFIG_DEBUG => $debug] = $this->config;
 
@@ -232,7 +236,7 @@ class Proximity {
     }
 
     /**
-     * @return Socket|null
+     * @return IAdapter|null
      */
     private function create () {
         [
@@ -240,12 +244,15 @@ class Proximity {
             self::CONFIG_PORT => $port,
             self::CONFIG_DEBUG => $debug,
             self::CONFIG_TIMEOUT => $timeout,
+            self::CONFIG_ADAPTER => $adapter,
         ] = $this->config;
 
-        $socket = new Socket($timeout);
+        if (!$adapter || !($adapter instanceof IAdapter)) {
+            $adapter = new Socket($timeout);
+        }
 
         try {
-            $socket->open($host, $port);
+            $adapter->open($host, $port);
             $this->ready = true;
         } catch (Exception $exception) {
             if (!$debug) {
@@ -256,7 +263,7 @@ class Proximity {
             var_dump($exception);
         }
 
-        return $socket;
+        return $adapter;
     }
 }
 

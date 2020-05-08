@@ -13,6 +13,7 @@
     "ext-json": "*"
   },
   "require-dev": {
+    "phake/phake": "^3.1",
     "phpunit/phpunit": "^8.0"
   },
   "autoload": {

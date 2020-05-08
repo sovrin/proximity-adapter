@@ -1,6 +1,6 @@
 <?php
 
-namespace Proximity;
+namespace Proximity\Adapter;
 
 use Exception;
 
@@ -9,12 +9,16 @@ use Exception;
  * @created 13.04.2020
  * @package Proximity
  */
-class Socket {
+class Socket implements IAdapter {
 
-    /** @var int */
-    private $timeout = 1;
+    /**
+     * @var int
+     */
+    private $timeout;
 
-    /** @var resource */
+    /**
+     * @var null
+     */
     private $connection = null;
 
     /**
@@ -22,23 +26,8 @@ class Socket {
      *
      * @param $timeout
      */
-    public function __construct (int $timeout) {
+    public function __construct (int $timeout = 1) {
         $this->timeout = $timeout;
-    }
-
-    /**
-     * @return string
-     */
-    static function unique () {
-        $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"$&/()=[]{}0123456789';
-        $key = '';
-        $length = strlen($chars);
-
-        for ($i = 0; $i < 16; $i++) {
-            $key .= $chars[mt_rand(0, $length - 1)];
-        }
-
-        return base64_encode($key);
     }
 
     /**
@@ -48,7 +37,7 @@ class Socket {
      *
      * @throws Exception
      */
-    function open ($host = '127.0.0.1', $port = 80, $ssl = false) {
+    public function open ($host = '127.0.0.1', $port = 80, $ssl = false) {
         $start = microtime(true);
         $key = self::unique();
         $timeout = $this->timeout;
@@ -92,18 +81,18 @@ class Socket {
             throw new Exception("Unable to connect to websocket server: timed out after {$timeout} second/s");
         }
 
-        $rc = fwrite($socket, $header);
+        if (ftell($socket) === 0) {
+            $rc = fwrite($socket, $header);
 
-        if (!$rc) {
-            throw new Exception("Unable to send upgrade header to websocket server: $errorString ($errorNumber)");
-        }
+            if (!$rc) {
+                throw new Exception("Unable to send upgrade header to websocket server: $errorString ($errorNumber)");
+            }
 
-        $responseHeader = fread($socket, 1024);
+            $responseHeader = fread($socket, 1024);
 
-        echo $responseHeader;
-
-        if (!strpos($responseHeader, " 101 ") || !strpos($responseHeader, 'Sec-WebSocket-Accept: ')) {
-            throw new Exception("Server did not accept to upgrade connection to websocket." . $responseHeader . E_USER_ERROR);
+            if (!strpos($responseHeader, " 101 ") || !strpos($responseHeader, 'Sec-WebSocket-Accept: ')) {
+                throw new Exception("Server did not accept to upgrade connection to websocket." . $responseHeader . E_USER_ERROR);
+            }
         }
 
         $this->connection = $socket;
@@ -115,7 +104,7 @@ class Socket {
      * @return false|int
      * @throws Exception
      */
-    public function write ($data) {
+    public function flush ($data) {
         $header = chr(0x80 | 0x02);
 
         if (strlen($data) < 126) {
@@ -143,6 +132,13 @@ class Socket {
     }
 
     /**
+     *
+     */
+    public function close () {
+        stream_socket_shutdown($this->connection, STREAM_SHUT_WR);
+    }
+
+    /**
      * @param $start
      *
      * @return bool
@@ -152,9 +148,17 @@ class Socket {
     }
 
     /**
-     *
+     * @return string
      */
-    public function close () {
-        stream_socket_shutdown($this->connection, STREAM_SHUT_WR);
+    static function unique () {
+        $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"$&/()=[]{}0123456789';
+        $key = '';
+        $length = strlen($chars);
+
+        for ($i = 0; $i < 16; $i++) {
+            $key .= $chars[mt_rand(0, $length - 1)];
+        }
+
+        return base64_encode($key);
     }
 }
