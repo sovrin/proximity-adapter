@@ -120,7 +120,7 @@ class Proximity {
             return;
         }
 
-        $payload = $instance->augment('push/open');
+        $payload = $instance->augment('open');
 
         $callback = function () use ($instance, $payload) {
             $instance->send($payload);
@@ -134,7 +134,7 @@ class Proximity {
      */
     static function message ($message) {
         $instance = self::getInstance();
-        $payload = $instance->augment('push/data', [
+        $payload = $instance->augment('data', [
             'message' => $message,
         ]);
 
@@ -150,7 +150,7 @@ class Proximity {
      */
     static function close () {
         $instance = self::getInstance();
-        $payload = $instance->augment('push/close');
+        $payload = $instance->augment('close');
 
         $callback = function () use ($instance, $payload) {
             $instance->send($payload);
@@ -166,7 +166,7 @@ class Proximity {
      */
     static function flag ($name = 'flag') {
         $instance = self::getInstance();
-        $payload = $instance->augment('push/flag', [
+        $payload = $instance->augment('flag', [
             'name' => $name,
         ]);
 
