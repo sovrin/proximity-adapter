@@ -61,7 +61,7 @@ class Proximity {
      * Proximity constructor.
      */
     public function __construct () {
-        // hello darkness my old friend
+        $this->context[self::CONTEXT_PROJECT] = Utilities::unique();
     }
 
     /**
@@ -178,6 +178,25 @@ class Proximity {
     }
 
     /**
+     * @param $payload
+     */
+    private function send ($payload) {
+        $adapter = $this->adapter;
+
+        try {
+            $adapter->flush($payload);
+        } catch (Exception $exception) {
+            [self::CONFIG_DEBUG => $debug] = $this->config;
+
+            if (!$debug) {
+                return;
+            }
+
+            var_dump($exception);
+        }
+    }
+
+    /**
      * @param $element
      */
     private function push ($element) {
@@ -185,16 +204,6 @@ class Proximity {
 
         if ($this->ready) {
             $this->execute();
-        }
-    }
-
-    /**
-     *
-     */
-    private function execute () {
-        while (count($this->stack) > 0) {
-            $callback = array_shift($this->stack);
-            $callback();
         }
     }
 
@@ -217,34 +226,15 @@ class Proximity {
     }
 
     /**
-     * @param $payload
-     */
-    private function send ($payload) {
-        $adapter = $this->adapter;
-
-        try {
-            $adapter->flush($payload);
-        } catch (Exception $exception) {
-            [self::CONFIG_DEBUG => $debug] = $this->config;
-
-            if (!$debug) {
-                return;
-            }
-
-            var_dump($exception);
-        }
-    }
-
-    /**
      * @return IAdapter|null
      */
     private function create () {
         [
             self::CONFIG_HOST => $host,
             self::CONFIG_PORT => $port,
+            self::CONFIG_ADAPTER => $adapter,
             self::CONFIG_DEBUG => $debug,
             self::CONFIG_TIMEOUT => $timeout,
-            self::CONFIG_ADAPTER => $adapter,
         ] = $this->config;
 
         if (!$adapter || !($adapter instanceof IAdapter)) {
@@ -264,6 +254,16 @@ class Proximity {
         }
 
         return $adapter;
+    }
+
+    /**
+     *
+     */
+    private function execute () {
+        while (count($this->stack) > 0) {
+            $callback = array_shift($this->stack);
+            $callback();
+        }
     }
 }
 

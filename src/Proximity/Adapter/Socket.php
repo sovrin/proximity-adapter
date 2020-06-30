@@ -3,6 +3,7 @@
 namespace Proximity\Adapter;
 
 use Exception;
+use Proximity\Utilities;
 
 /**
  * @author  Oleg Kamlowski <oleg.kamlowski@thomann.de>
@@ -38,8 +39,8 @@ class Socket implements IAdapter {
      * @throws Exception
      */
     public function open ($host = '127.0.0.1', $port = 80, $ssl = false) {
-        $start = microtime(true);
-        $key = self::unique();
+        $timer = Utilities::timer($this->timeout);
+        $key = Utilities::unique();
         $timeout = $this->timeout;
 
         $header = "GET / HTTP/1.1\r\n" .
@@ -47,7 +48,7 @@ class Socket implements IAdapter {
             "pragma: no-cache\r\n" .
             "Upgrade: WebSocket\r\n" .
             "Connection: Upgrade\r\n" .
-            "Sec-WebSocket-Key: $key\r\n" .
+            "Sec-WebSocket-Key: $key==\r\n" .
             "Sec-WebSocket-Version: 13\r\n" .
             "\r\n"
         ;
@@ -65,7 +66,7 @@ class Socket implements IAdapter {
         stream_set_timeout($socket, $timeout);
 
         $ready = false;
-        while ($this->inTimeFrame($start) && !$ready) {
+        while ($timer() && !$ready) {
             $w = [$socket];
             $r = $e = [];
 
@@ -136,29 +137,5 @@ class Socket implements IAdapter {
      */
     public function close () {
         stream_socket_shutdown($this->connection, STREAM_SHUT_WR);
-    }
-
-    /**
-     * @param $start
-     *
-     * @return bool
-     */
-    private function inTimeFrame ($start) {
-        return microtime(true) - $start <= $this->timeout;
-    }
-
-    /**
-     * @return string
-     */
-    static function unique () {
-        $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"$&/()=[]{}0123456789';
-        $key = '';
-        $length = strlen($chars);
-
-        for ($i = 0; $i < 16; $i++) {
-            $key .= $chars[mt_rand(0, $length - 1)];
-        }
-
-        return base64_encode($key);
     }
 }
